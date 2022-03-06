@@ -1,5 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="DesignSurface">
+    <option name="filePathToZoomLevelMap">
+      <map>
+        <entry key="..\:/WorkDirectory/Projects/Android/TaskScheduler/app/src/main/res/drawable/ic_settings_24.xml" value="0.297" />
+        <entry key="..\:/WorkDirectory/Projects/Android/TaskScheduler/app/src/main/res/layout/activity_main.xml" value="0.25" />
+        <entry key="..\:/WorkDirectory/Projects/Android/TaskScheduler/app/src/main/res/layout/calendar_layout.xml" value="0.296195652173913" />
+        <entry key="..\:/WorkDirectory/Projects/Android/TaskScheduler/app/src/main/res/layout/task_layout.xml" value="0.296195652173913" />
+        <entry key="..\:/WorkDirectory/Projects/Android/TaskScheduler/app/src/main/res/menu/main_toolbar_menu.xml" value="0.3145833333333333" />
+      </map>
+    </option>
+  </component>
   <component name="ProjectRootManager" version="2" languageLevel="JDK_11" default="true" project-jdk-name="Android Studio default JDK" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/build/classes" />
   </component>
