@@ -3,4 +3,6 @@
     <string name="menu_item_settings">settings</string>
     <string name="tab_item_tasks">tasks</string>
     <string name="tab_item_calendar">calendar</string>
+
+    <string name="task_enter_text">add new task</string>
 </resources>

@@ -1,4 +1,4 @@
-package com.dubr0vin.taskscheduler;
+package com.dubr0vin.taskscheduler.ui;
 
 import android.util.Log;
 
@@ -6,6 +6,10 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
+
+import com.dubr0vin.taskscheduler.App;
+import com.dubr0vin.taskscheduler.ui.CalendarFragment;
+import com.dubr0vin.taskscheduler.ui.TaskFragment;
 
 public class ViewPagerAdapter extends FragmentStateAdapter {
     public ViewPagerAdapter(@NonNull FragmentActivity fragmentActivity) {
