@@ -3,9 +3,12 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/WorkDirectory/Projects/Android/TaskScheduler/app/src/main/res/drawable/ic_baseline_create_24.xml" value="0.3215" />
         <entry key="..\:/WorkDirectory/Projects/Android/TaskScheduler/app/src/main/res/drawable/ic_settings_24.xml" value="0.297" />
         <entry key="..\:/WorkDirectory/Projects/Android/TaskScheduler/app/src/main/res/layout/activity_main.xml" value="0.25" />
-        <entry key="..\:/WorkDirectory/Projects/Android/TaskScheduler/app/src/main/res/layout/calendar_layout.xml" value="0.296195652173913" />
+        <entry key="..\:/WorkDirectory/Projects/Android/TaskScheduler/app/src/main/res/layout/calendar_layout.xml" value="0.33" />
+        <entry key="..\:/WorkDirectory/Projects/Android/TaskScheduler/app/src/main/res/layout/item_day.xml" value="0.296195652173913" />
+        <entry key="..\:/WorkDirectory/Projects/Android/TaskScheduler/app/src/main/res/layout/item_generate.xml" value="0.3145833333333333" />
         <entry key="..\:/WorkDirectory/Projects/Android/TaskScheduler/app/src/main/res/layout/item_task.xml" value="0.33" />
         <entry key="..\:/WorkDirectory/Projects/Android/TaskScheduler/app/src/main/res/layout/task_layout.xml" value="0.33" />
         <entry key="..\:/WorkDirectory/Projects/Android/TaskScheduler/app/src/main/res/menu/main_toolbar_menu.xml" value="0.3145833333333333" />

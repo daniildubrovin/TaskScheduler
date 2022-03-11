@@ -1,6 +1,7 @@
 package com.dubr0vin.taskscheduler.ui;
 
 import android.text.InputType;
+import android.text.Selection;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -19,6 +20,7 @@ import com.dubr0vin.taskscheduler.App;
 import com.dubr0vin.taskscheduler.R;
 
 import java.util.ArrayList;
+import java.util.Random;
 
 public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder> {
     private final ArrayList<String> tasks;
@@ -60,15 +62,17 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
         editText.setImeOptions(EditorInfo.IME_ACTION_GO);
         editText.setRawInputType(InputType.TYPE_CLASS_TEXT);
         editText.setOnEditorActionListener((textView, i, keyEvent) -> {
-            focusPosition = holder.getAdapterPosition() + 1;
             if(i == EditorInfo.IME_ACTION_GO) {
                 if(!editText.getText().toString().isEmpty() && holder.getAdapterPosition() == tasks.size() - 1){
                     tasks.add("");
                     notifyItemInserted(tasks.size() - 1);
+                    focusPosition = holder.getAdapterPosition() + 1;
                 }
-                else notifyItemChanged(focusPosition);
+                else if(editText.getSelectionStart() == holder.editText.getText().length()){
+                    focusPosition = holder.getAdapterPosition() + 1;
+                    notifyItemChanged(focusPosition);
+                }
                 recyclerView.scrollToPosition(focusPosition);
-                return true;
             }
             return false;
         });
@@ -78,12 +82,16 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
         holder.editText.setOnKeyListener((view, i, keyEvent) -> {
             if(keyEvent.getAction() == KeyEvent.ACTION_DOWN && keyEvent.getKeyCode() == KeyEvent.KEYCODE_DEL){
                 int position = holder.getAdapterPosition();
-                focusPosition = position > 0 ? position - 1 : 0;
-                if(tasks.size() > 1 && holder.editText.getText().toString().isEmpty()){
+                if(holder.getAdapterPosition() != 0 && holder.editText.getSelectionStart() == 0){
+                    focusPosition = position > 0 ? position - 1 : 0;
+                    notifyItemChanged(focusPosition);
+                }
+                else if(tasks.size() > 1 && holder.editText.getText().toString().isEmpty()){
+                    focusPosition = position > 0 ? position - 1 : 0;
                     tasks.remove(position);
                     notifyItemRemoved(position);
+                    notifyItemChanged(focusPosition);
                 }
-                notifyItemChanged(focusPosition);
             }
             return false;
         });
