@@ -6,13 +6,32 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.dubr0vin.taskscheduler.App;
 import com.dubr0vin.taskscheduler.R;
+import com.dubr0vin.taskscheduler.db.Day;
+import com.dubr0vin.taskscheduler.db.TasksDao;
 import com.google.android.material.button.MaterialButton;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
+import java.util.Locale;
 
 public class CalendarAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     enum ViewTypes { GENERATE, DAY }
+    private final App app;
+    private final TasksDao tasksDao;
+    private final ArrayList<Day> days;
+
+    public CalendarAdapter(App app) {
+        this.app = app;
+        tasksDao = app.db.tasksDao();
+        days = new ArrayList<>();
+    }
 
     @NonNull
     @Override
@@ -24,10 +43,16 @@ public class CalendarAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         if(holder.getItemViewType() == ViewTypes.GENERATE.ordinal()){
-
+            GenerateViewHolder generateHolder = (GenerateViewHolder) holder;
+            generateHolder.generateButton.setOnClickListener(view -> app.dbThreadPool.execute(() -> { }));
         }
         else {
+            DayViewHolder dayHolder = (DayViewHolder) holder;
+            app.dbThreadPool.execute(() -> {
 
+            });
+            dayHolder.recyclerView.setLayoutManager(new LinearLayoutManager(holder.itemView.getContext()));
+            dayHolder.recyclerView.setAdapter(new DayAdapter(new ArrayList<>()));
         }
     }
 
@@ -38,7 +63,18 @@ public class CalendarAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
     @Override
     public int getItemCount() {
-        return 10;
+        return days.size() + 1;
+    }
+
+    private List<String> getDateList(int count) {
+        List<String> lDates = new ArrayList<>();
+        Calendar calendar = Calendar.getInstance();
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd  MMM", Locale.getDefault());
+        for (int i = 0; i < count; i++) {
+            lDates.add(simpleDateFormat.format(calendar.getTime()));
+            calendar.add(Calendar.DAY_OF_YEAR, 1);
+        }
+        return lDates;
     }
 
     static class GenerateViewHolder extends RecyclerView.ViewHolder {

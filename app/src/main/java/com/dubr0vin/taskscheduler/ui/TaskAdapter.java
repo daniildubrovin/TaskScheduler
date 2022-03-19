@@ -1,7 +1,7 @@
 package com.dubr0vin.taskscheduler.ui;
 
+import android.content.Context;
 import android.text.InputType;
-import android.text.Selection;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -9,6 +9,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -18,18 +19,33 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.dubr0vin.taskscheduler.App;
 import com.dubr0vin.taskscheduler.R;
+import com.dubr0vin.taskscheduler.db.Task;
+import com.dubr0vin.taskscheduler.db.TasksDao;
 
 import java.util.ArrayList;
-import java.util.Random;
+import java.util.List;
 
-public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder> {
-    private final ArrayList<String> tasks;
+public class TaskAdapter extends RecyclerView.Adapter<TaskViewHolder> {
+    private final ArrayList<Task> tasks;
     private int focusPosition;
     private final RecyclerView recyclerView;
+    private final App app;
+    private final TasksDao tasksDao;
 
-    public TaskAdapter(ArrayList<String> tasks, RecyclerView recyclerView) {
-        this.tasks = tasks;
+    public TaskAdapter(RecyclerView recyclerView, App app) {
         this.recyclerView = recyclerView;
+        this.app = app;
+        tasksDao = app.db.tasksDao();
+        tasks = new ArrayList<>();
+
+        app.dbThreadPool.execute(()->{
+            if(tasksDao.getAllTasks().isEmpty()) tasksDao.insertTask(new Task(false,""));
+            List<Task> tasksFromDB = tasksDao.getAllTasks();
+            app.uiThread.post(() -> {
+                tasks.addAll(tasksFromDB);
+                notifyItemRangeInserted(0,tasks.size());
+            });
+        });
     }
 
     @NonNull
@@ -40,35 +56,61 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
 
     @Override
     public void onBindViewHolder(@NonNull TaskViewHolder holder, int position) {
-        if(position == focusPosition) holder.editText.requestFocus();
-        else holder.editText.clearFocus();
+        Log.d(App.TAG,"onBindViewHolder: " + position + "| fp: " + focusPosition);
+
+        if(position == focusPosition){
+            holder.getEditText().requestFocus();
+            InputMethodManager imm = (InputMethodManager) app.getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, InputMethodManager.HIDE_IMPLICIT_ONLY);
+        }
+        else holder.getEditText().clearFocus();
+
+        holder.getCheckBox().setChecked(tasks.get(position).isInCalendar());
+
+        holder.getCheckBox().setOnCheckedChangeListener((compoundButton, b) -> {
+            app.dbThreadPool.execute(() -> {
+                Task task = tasks.get(holder.getAdapterPosition());
+                task.setInCalendar(b);
+                tasksDao.editTask(task);
+                app.uiThread.post(() -> notifyItemChanged(holder.getAdapterPosition()));
+            });
+        });
 
         //before setText(), you need to remove TextWatcher, otherwise TextWatcher will loop
-        holder.editText.removeTextChangedListener(holder.textWatcher);
+        holder.getEditText().removeTextChangedListener(holder.getTextWatcher());
 
-        holder.editText.setText("");
-        holder.editText.append(tasks.get(position));
-        holder.textView.setText(String.valueOf(position + 1));
+        holder.getEditText().setText("");
+        holder.getEditText().append(tasks.get(position).getValue());
+        holder.getTextView().setText(String.valueOf(position + 1));
 
-        holder.textWatcher = new taskTextWatcher(tasks,holder);
-        holder.editText.addTextChangedListener(holder.textWatcher);
+        holder.setTextWatcher(new taskTextWatcher(tasks,holder,app));
+        holder.getEditText().addTextChangedListener(holder.getTextWatcher());
 
         setKeyEnterListener(holder);
         setKeyDeleteListener(holder);
     }
 
     private void setKeyEnterListener(TaskViewHolder holder){
-        EditText editText = holder.editText;
+        EditText editText = holder.getEditText();
         editText.setImeOptions(EditorInfo.IME_ACTION_GO);
         editText.setRawInputType(InputType.TYPE_CLASS_TEXT);
         editText.setOnEditorActionListener((textView, i, keyEvent) -> {
             if(i == EditorInfo.IME_ACTION_GO) {
                 if(!editText.getText().toString().isEmpty() && holder.getAdapterPosition() == tasks.size() - 1){
-                    tasks.add("");
-                    notifyItemInserted(tasks.size() - 1);
-                    focusPosition = holder.getAdapterPosition() + 1;
+                    Task newTask = new Task(false,"");
+                    app.dbThreadPool.execute(() -> {
+                        long newId = tasksDao.insertTask(newTask);
+                        newTask.setId(newId);
+                        List<Task> tasksFromDb = tasksDao.getAllTasks();
+                        app.uiThread.post(() -> {
+                            tasks.clear();
+                            tasks.addAll(tasksFromDb);
+                            focusPosition = holder.getAdapterPosition() + 1;
+                            notifyItemInserted(tasks.size() - 1);
+                        });
+                    });
                 }
-                else if(editText.getSelectionStart() == holder.editText.getText().length()){
+                else if(editText.getSelectionStart() == holder.getEditText().getText().length()){
                     focusPosition = holder.getAdapterPosition() + 1;
                     notifyItemChanged(focusPosition);
                 }
@@ -79,17 +121,25 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
     }
 
     private void setKeyDeleteListener(TaskViewHolder holder){
-        holder.editText.setOnKeyListener((view, i, keyEvent) -> {
+        holder.getEditText().setOnKeyListener((view, i, keyEvent) -> {
             if(keyEvent.getAction() == KeyEvent.ACTION_DOWN && keyEvent.getKeyCode() == KeyEvent.KEYCODE_DEL){
                 int position = holder.getAdapterPosition();
-                if(holder.getAdapterPosition() != 0 && holder.editText.getSelectionStart() == 0){
+                if(tasks.size() > 1 && holder.getEditText().getText().toString().isEmpty()){
                     focusPosition = position > 0 ? position - 1 : 0;
-                    notifyItemChanged(focusPosition);
+                    Task delTask = tasks.get(position);
+                    app.dbThreadPool.execute(() -> {
+                        tasksDao.deleteTask(delTask);
+                        List<Task> tasksFromDb = tasksDao.getAllTasks();
+                        app.uiThread.post(() -> {
+                            tasks.clear();
+                            tasks.addAll(tasksFromDb);
+                            notifyItemRemoved(position);
+                            notifyItemChanged(focusPosition);
+                        });
+                    });
                 }
-                else if(tasks.size() > 1 && holder.editText.getText().toString().isEmpty()){
+                else if(holder.getAdapterPosition() != 0 && holder.getEditText().getSelectionStart() == 0){
                     focusPosition = position > 0 ? position - 1 : 0;
-                    tasks.remove(position);
-                    notifyItemRemoved(position);
                     notifyItemChanged(focusPosition);
                 }
             }
@@ -98,19 +148,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
     }
 
     @Override
-    public int getItemCount() { return tasks.size(); }
-
-    static class TaskViewHolder extends RecyclerView.ViewHolder {
-        private final CheckBox checkBox;
-        private final EditText editText;
-        private final TextView textView;
-        private TextWatcher textWatcher;
-
-        public TaskViewHolder(@NonNull View itemView) {
-            super(itemView);
-            checkBox = itemView.findViewById(R.id.task_check_box);
-            editText = itemView.findViewById(R.id.task_edit_text);
-            textView = itemView.findViewById(R.id.task_item_text_view);
-        }
+    public int getItemCount() {
+        return tasks.size();
     }
 }

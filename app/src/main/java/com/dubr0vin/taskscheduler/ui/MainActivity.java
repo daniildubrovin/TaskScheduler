@@ -23,6 +23,7 @@ public class MainActivity extends AppCompatActivity {
         ViewPagerAdapter viewPagerAdapter = new ViewPagerAdapter(this);
         ViewPager2 viewPager2 = findViewById(R.id.main_viewpager);
         viewPager2.setAdapter(viewPagerAdapter);
+        viewPager2.setUserInputEnabled(false);
 
         String[] tabs = { getString(R.string.tab_item_tasks),getString(R.string.tab_item_calendar) };
         new TabLayoutMediator(tabLayout, viewPager2, true, (tab, position) -> tab.setText(tabs[position])).attach();
