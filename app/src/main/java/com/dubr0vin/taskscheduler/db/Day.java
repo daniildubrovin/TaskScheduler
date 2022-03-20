@@ -12,6 +12,13 @@ public class Day {
     private int id;
     private String date;
 
+    public Day() { }
+
+    @Ignore
+    public Day(String date) {
+        this.date = date;
+    }
+
     public void setId(int id) {
         this.id = id;
     }

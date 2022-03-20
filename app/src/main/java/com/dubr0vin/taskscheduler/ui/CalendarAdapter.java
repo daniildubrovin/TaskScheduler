@@ -3,6 +3,7 @@ package com.dubr0vin.taskscheduler.ui;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -12,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.dubr0vin.taskscheduler.App;
 import com.dubr0vin.taskscheduler.R;
 import com.dubr0vin.taskscheduler.db.Day;
+import com.dubr0vin.taskscheduler.db.Task;
 import com.dubr0vin.taskscheduler.db.TasksDao;
 import com.google.android.material.button.MaterialButton;
 
@@ -21,72 +23,91 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
-public class CalendarAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
-    enum ViewTypes { GENERATE, DAY }
+public class CalendarAdapter extends RecyclerView.Adapter<CalendarAdapter.DayViewHolder> {
     private final App app;
     private final TasksDao tasksDao;
     private final ArrayList<Day> days;
+    private final List<List<Task>> tasksForDay;
+    private final RecyclerView recyclerView;
+    private final ProgressBar progressBar;
 
-    public CalendarAdapter(App app) {
+    public CalendarAdapter(App app, RecyclerView recyclerView, ProgressBar progressBar) {
         this.app = app;
+        this.recyclerView = recyclerView;
+        this.progressBar = progressBar;
         tasksDao = app.db.tasksDao();
         days = new ArrayList<>();
+        tasksForDay = new ArrayList<>();
+        setProgressBar(true);
+
+        app.dbThreadPool.execute(() -> {
+            List<Day> daysFromDB = tasksDao.getAllDays();
+            days.addAll(daysFromDB);
+            tasksForDay.addAll(tasksDao.getTasksForDays(daysFromDB));
+            try{Thread.sleep(500);} catch (InterruptedException e) { }
+            app.uiThread.post(() -> {
+                notifyItemRangeInserted(0,days.size());
+                setProgressBar(false);
+            });
+        });
     }
 
     @NonNull
     @Override
-    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        if(viewType == ViewTypes.GENERATE.ordinal()) return new GenerateViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.item_generate,parent,false));
-        else return new DayViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.item_day,parent,false));
+    public DayViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        return new DayViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.item_day,parent,false));
     }
 
-    @Override
-    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-        if(holder.getItemViewType() == ViewTypes.GENERATE.ordinal()){
-            GenerateViewHolder generateHolder = (GenerateViewHolder) holder;
-            generateHolder.generateButton.setOnClickListener(view -> app.dbThreadPool.execute(() -> { }));
-        }
-        else {
-            DayViewHolder dayHolder = (DayViewHolder) holder;
-            app.dbThreadPool.execute(() -> {
-
-            });
-            dayHolder.recyclerView.setLayoutManager(new LinearLayoutManager(holder.itemView.getContext()));
-            dayHolder.recyclerView.setAdapter(new DayAdapter(new ArrayList<>()));
-        }
-    }
 
     @Override
-    public int getItemViewType(int position) {
-        return position == 0 ? ViewTypes.GENERATE.ordinal() : ViewTypes.DAY.ordinal();
+    public void onBindViewHolder(@NonNull DayViewHolder holder, int position) {
+        holder.textView.setText(days.get(position).getDate());
+        holder.recyclerView.setLayoutManager(new LinearLayoutManager(holder.itemView.getContext()));
+        holder.recyclerView.setAdapter(new DayAdapter(tasksForDay.get(position)));
     }
 
     @Override
     public int getItemCount() {
-        return days.size() + 1;
+        return days.size();
     }
 
-    private List<String> getDateList(int count) {
-        List<String> lDates = new ArrayList<>();
+    private void setNewDays(){
+        setProgressBar(true);
+        days.clear(); tasksForDay.clear();
+        notifyItemRangeRemoved(0,app.COUNT_GENERATE_DAY);
+
+        app.dbThreadPool.execute(() -> {
+            tasksDao.deleteAllDays();
+
+            List<Task> tasks = tasksDao.getInCalendarTasks();
+            tasksDao.insertDays(getDateList(app.COUNT_GENERATE_DAY), tasks);
+
+            List<Day> lDays = tasksDao.getAllDays();
+
+            tasksForDay.addAll(tasksDao.getTasksForDays(lDays));
+            days.addAll(lDays);
+
+            app.uiThread.post(() -> {
+                setProgressBar(false);
+                notifyItemRangeInserted(0, app.COUNT_GENERATE_DAY);
+            });
+        });
+    }
+
+    private List<Day> getDateList(int count) {
+        List<Day> lDays = new ArrayList<>();
         Calendar calendar = Calendar.getInstance();
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd  MMM", Locale.getDefault());
         for (int i = 0; i < count; i++) {
-            lDates.add(simpleDateFormat.format(calendar.getTime()));
+            lDays.add(new Day(simpleDateFormat.format(calendar.getTime())));
             calendar.add(Calendar.DAY_OF_YEAR, 1);
         }
-        return lDates;
+        return lDays;
     }
 
-    static class GenerateViewHolder extends RecyclerView.ViewHolder {
-        private final MaterialButton generateButton;
-        private final MaterialButton settingButton;
-        private final TextView textView;
-        public GenerateViewHolder(@NonNull View itemView) {
-            super(itemView);
-            generateButton = itemView.findViewById(R.id.item_generate_button);
-            settingButton = itemView.findViewById(R.id.item_generate_setting_button);
-            textView = itemView.findViewById(R.id.item_generate_text_view);
-        }
+    private void setProgressBar(boolean isWorking){
+        progressBar.setVisibility(isWorking ? View.VISIBLE : View.GONE);
+        recyclerView.setVisibility(isWorking ? View.GONE : View.VISIBLE);
     }
 
     static class DayViewHolder extends RecyclerView.ViewHolder {

@@ -29,10 +29,9 @@ public class DayAdapter extends RecyclerView.Adapter<TaskViewHolder> {
     @Override
     public void onBindViewHolder(@NonNull TaskViewHolder holder, int position) {
         Task task = tasks.get(position);
-        holder.getCheckBox().setChecked(task.isInCalendar());
         holder.getTextView().setText(String.valueOf(position));
-        holder.getEditText().setText("");
-        holder.getEditText().append(task.getValue());
+        holder.getEditText().setEnabled(false);
+        holder.getEditText().setText(task.getValue());
     }
 
     @Override

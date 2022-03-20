@@ -16,7 +16,7 @@ public class App extends Application {
     public TasksDatabase db;
     public ExecutorService dbThreadPool;
     public Handler uiThread;
-    public int COUNT_GENERATE_DAY = 10;
+    public int COUNT_GENERATE_DAY = 7;
 
     @Override
     public void onCreate() {

@@ -12,6 +12,7 @@
 
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/main_toolbar"
+            app:layout_scrollFlags="scroll|enterAlways"
             app:menu="@menu/main_toolbar_menu"
             android:background="@color/white"
             android:layout_width="match_parent"
