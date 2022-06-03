@@ -1,4 +1,4 @@
-package com.dubr0vin.taskscheduler.ui;
+package com.dubr0vin.taskscheduler.ui.fragments;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -8,16 +8,12 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.dubr0vin.taskscheduler.App;
 import com.dubr0vin.taskscheduler.R;
-import com.dubr0vin.taskscheduler.db.Task;
-import com.dubr0vin.taskscheduler.db.TasksDao;
-
-import java.util.ArrayList;
-import java.util.concurrent.ExecutorService;
+import com.dubr0vin.taskscheduler.ui.CustomLinearLayoutManager;
+import com.dubr0vin.taskscheduler.ui.adapters.TaskAdapter;
 
 public class TaskFragment extends Fragment {
     public TaskFragment() {}
@@ -30,7 +26,7 @@ public class TaskFragment extends Fragment {
         App app = (App) requireActivity().getApplication();
 
         RecyclerView recyclerView = view.findViewById(R.id.task_recycler_view);
-        recyclerView.setLayoutManager(new LinearLayoutManager(view.getContext()));
+        recyclerView.setLayoutManager(new CustomLinearLayoutManager(view.getContext()));
         recyclerView.setAdapter(new TaskAdapter(recyclerView,app));
 
         return view;

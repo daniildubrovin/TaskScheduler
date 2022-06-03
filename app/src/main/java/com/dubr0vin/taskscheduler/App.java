@@ -25,4 +25,12 @@ public class App extends Application {
         uiThread = new Handler(Looper.getMainLooper());
         db = Room.databaseBuilder(getApplicationContext(),TasksDatabase.class,"tasks").build();
     }
+
+    public void runInDBThread(Runnable runnable){
+        dbThreadPool.execute(runnable);
+    }
+
+    public void runInUI(Runnable runnable){
+        uiThread.post(runnable);
+    }
 }

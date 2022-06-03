@@ -1,4 +1,4 @@
-package com.dubr0vin.taskscheduler.ui;
+package com.dubr0vin.taskscheduler.ui.adapters;
 
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
@@ -8,6 +8,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.dubr0vin.taskscheduler.R;
 import com.dubr0vin.taskscheduler.db.Task;
+import com.dubr0vin.taskscheduler.ui.TaskViewHolder;
+import com.google.gson.internal.LinkedTreeMap;
 
 import java.util.ArrayList;
 import java.util.List;

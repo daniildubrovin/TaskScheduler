@@ -1,18 +1,14 @@
-package com.dubr0vin.taskscheduler.ui;
+package com.dubr0vin.taskscheduler.ui.adapters;
 
 import android.content.Context;
 import android.text.InputType;
-import android.text.TextWatcher;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
-import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.CheckBox;
 import android.widget.EditText;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -21,6 +17,8 @@ import com.dubr0vin.taskscheduler.App;
 import com.dubr0vin.taskscheduler.R;
 import com.dubr0vin.taskscheduler.db.Task;
 import com.dubr0vin.taskscheduler.db.TasksDao;
+import com.dubr0vin.taskscheduler.ui.TaskViewHolder;
+import com.dubr0vin.taskscheduler.ui.TaskTextWatcher;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,10 +36,10 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskViewHolder> {
         tasksDao = app.db.tasksDao();
         tasks = new ArrayList<>();
 
-        app.dbThreadPool.execute(()->{
+        app.runInDBThread(()->{
             if(tasksDao.getAllTasks().isEmpty()) tasksDao.insertTask(new Task(false,""));
             List<Task> tasksFromDB = tasksDao.getAllTasks();
-            app.uiThread.post(() -> {
+            app.runInUI(() -> {
                 tasks.addAll(tasksFromDB);
                 notifyItemRangeInserted(0,tasks.size());
             });
@@ -68,11 +66,11 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskViewHolder> {
         holder.getCheckBox().setChecked(tasks.get(position).isInCalendar());
 
         holder.getCheckBox().setOnCheckedChangeListener((compoundButton, b) -> {
-            app.dbThreadPool.execute(() -> {
+            app.runInDBThread(() -> {
                 Task task = tasks.get(holder.getAdapterPosition());
                 task.setInCalendar(b);
                 tasksDao.editTask(task);
-                app.uiThread.post(() -> notifyItemChanged(holder.getAdapterPosition()));
+                app.runInUI(() -> notifyItemChanged(holder.getAdapterPosition()));
             });
         });
 
@@ -83,33 +81,37 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskViewHolder> {
         holder.getEditText().append(tasks.get(position).getValue());
         holder.getTextView().setText(String.valueOf(position + 1));
 
-        holder.setTextWatcher(new taskTextWatcher(tasks,holder,app));
+        holder.setTextWatcher(new TaskTextWatcher(tasks,holder,app));
         holder.getEditText().addTextChangedListener(holder.getTextWatcher());
 
         setKeyEnterListener(holder);
         setKeyDeleteListener(holder);
     }
 
+    private void addNewTask(TaskViewHolder holder){
+        app.runInDBThread(() -> {
+            Task newTask = new Task(false,"");
+            newTask.setId(tasksDao.insertTask(newTask));
+
+            List<Task> tasksFromDb = tasksDao.getAllTasks();
+
+            app.runInUI(() -> {
+                tasks.clear();
+                tasks.addAll(tasksFromDb);
+                focusPosition = holder.getAdapterPosition() + 1;
+                notifyItemInserted(tasks.size() - 1);
+            });
+        });
+    }
+
     private void setKeyEnterListener(TaskViewHolder holder){
         EditText editText = holder.getEditText();
         editText.setImeOptions(EditorInfo.IME_ACTION_GO);
         editText.setRawInputType(InputType.TYPE_CLASS_TEXT);
+
         editText.setOnEditorActionListener((textView, i, keyEvent) -> {
             if(i == EditorInfo.IME_ACTION_GO) {
-                if(!editText.getText().toString().isEmpty() && holder.getAdapterPosition() == tasks.size() - 1){
-                    Task newTask = new Task(false,"");
-                    app.dbThreadPool.execute(() -> {
-                        long newId = tasksDao.insertTask(newTask);
-                        newTask.setId(newId);
-                        List<Task> tasksFromDb = tasksDao.getAllTasks();
-                        app.uiThread.post(() -> {
-                            tasks.clear();
-                            tasks.addAll(tasksFromDb);
-                            focusPosition = holder.getAdapterPosition() + 1;
-                            notifyItemInserted(tasks.size() - 1);
-                        });
-                    });
-                }
+                if(!editText.getText().toString().isEmpty() && holder.getAdapterPosition() == tasks.size() - 1) addNewTask(holder);
                 else if(editText.getSelectionStart() == holder.getEditText().getText().length()){
                     focusPosition = holder.getAdapterPosition() + 1;
                     notifyItemChanged(focusPosition);
@@ -120,23 +122,30 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskViewHolder> {
         });
     }
 
+    private void deleteTask(int position){
+        Task delTask = tasks.get(position);
+
+        app.runInDBThread(() -> {
+            tasksDao.deleteTask(delTask);
+
+            List<Task> tasksFromDb = tasksDao.getAllTasks();
+
+            app.runInUI(() -> {
+                tasks.clear();
+                tasks.addAll(tasksFromDb);
+                notifyItemRemoved(position);
+                notifyItemChanged(focusPosition);
+            });
+        });
+    }
+
     private void setKeyDeleteListener(TaskViewHolder holder){
         holder.getEditText().setOnKeyListener((view, i, keyEvent) -> {
             if(keyEvent.getAction() == KeyEvent.ACTION_DOWN && keyEvent.getKeyCode() == KeyEvent.KEYCODE_DEL){
                 int position = holder.getAdapterPosition();
                 if(tasks.size() > 1 && holder.getEditText().getText().toString().isEmpty()){
                     focusPosition = position > 0 ? position - 1 : 0;
-                    Task delTask = tasks.get(position);
-                    app.dbThreadPool.execute(() -> {
-                        tasksDao.deleteTask(delTask);
-                        List<Task> tasksFromDb = tasksDao.getAllTasks();
-                        app.uiThread.post(() -> {
-                            tasks.clear();
-                            tasks.addAll(tasksFromDb);
-                            notifyItemRemoved(position);
-                            notifyItemChanged(focusPosition);
-                        });
-                    });
+                    deleteTask(position);
                 }
                 else if(holder.getAdapterPosition() != 0 && holder.getEditText().getSelectionStart() == 0){
                     focusPosition = position > 0 ? position - 1 : 0;

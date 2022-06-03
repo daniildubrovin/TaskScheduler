@@ -6,6 +6,8 @@ import androidx.room.Entity;
 import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 
+import java.util.Objects;
+
 @Entity
 public class Task {
     @PrimaryKey(autoGenerate = true)
@@ -53,5 +55,13 @@ public class Task {
                 ", inCalendar=" + inCalendar +
                 ", value='" + value + '\'' +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Task task = (Task) o;
+        return id == task.id && inCalendar == task.inCalendar && Objects.equals(value, task.value);
     }
 }

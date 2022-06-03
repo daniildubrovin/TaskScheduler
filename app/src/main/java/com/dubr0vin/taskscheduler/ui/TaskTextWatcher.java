@@ -10,12 +10,12 @@ import com.dubr0vin.taskscheduler.db.TasksDao;
 
 import java.util.ArrayList;
 
-public class taskTextWatcher implements TextWatcher {
+public class TaskTextWatcher implements TextWatcher {
     ArrayList<Task> tasks;
     TaskViewHolder holder;
     App app;
 
-    public taskTextWatcher(ArrayList<Task> tasks, TaskViewHolder holder, App app) {
+    public TaskTextWatcher(ArrayList<Task> tasks, TaskViewHolder holder, App app) {
         this.tasks = tasks;
         this.holder = holder;
         this.app = app;

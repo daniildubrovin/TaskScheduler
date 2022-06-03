@@ -7,6 +7,8 @@
 
     <!--item_generate -->
     <string name="generate_button">generate tasks</string>
-
     <string name="task_enter_text">add new task</string>
+    <string name="edit_day_tasks_title">editing tasks</string>
+    <string name="edit_day_tasks_negative_button">Cancel</string>
+    <string name="edit_day_tasks_positive_button">OK</string>
 </resources>

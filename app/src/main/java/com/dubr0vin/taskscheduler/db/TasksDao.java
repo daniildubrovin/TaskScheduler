@@ -32,7 +32,6 @@ public abstract class TasksDao {
     public abstract void deleteTask(Task task);
 
     //DAY
-
     @Query("SELECT * FROM Day")
     public abstract List<Day> getAllDays();
 
@@ -42,70 +41,17 @@ public abstract class TasksDao {
     @Query("SELECT * FROM Day WHERE id = :idDay")
     public abstract Day getDay(int idDay);
 
-    @Transaction
-    public List<Task> getTasksForDay(int idDay){
-        List<Task> tasks = new ArrayList<>();
-        for (ConnectionDayWithTask connectionDayWithTask : getConnectionsDayWithTask(idDay)){
-            tasks.add(getTask(connectionDayWithTask.getIdTask()));
-        }
-        return tasks;
-    }
+    @Insert
+    public abstract void insertDay(Day day);
 
-    @Transaction
-    public List<List<Task>> getTasksForDays(List<Day> days){
-        List<List<Task>> tasksForDays = new ArrayList<>();
-        for(Day day : days) tasksForDays.add(getTasksForDay(day.getId()));
-        return tasksForDays;
-    }
+    @Update
+    public abstract void editDay(Day day);
 
-    @Transaction
-    public void insertDay(Day day,List<Task> tasks){
-        insertDayWithoutTasks(day);
-        for(Task task : tasks){
-            Day lDay = getDay(day.getDate());
-            connectDayWithTask(new ConnectionDayWithTask(lDay.getId(),(int)task.getId()));
-        }
-    }
-
-    @Transaction
-    public void insertDays(List<Day> days,List<Task> tasks){
-        for(Day day : days) insertDay(day,tasks);
-    }
-
-
-    @Transaction
-    public void deleteDay(int idDay){
-        for (ConnectionDayWithTask connectionDayWithTask : getConnectionsDayWithTask(idDay)) {
-            deleteTaskFromDay(connectionDayWithTask);
-        }
-        notSafeDeleteDay(idDay);
-    }
+    @Delete
+    public abstract void deleteDay(Day day);
 
     @Transaction
     public void deleteAllDays(){
-        for(Day day : getAllDays()){
-            for (ConnectionDayWithTask connectionDayWithTask : getConnectionsDayWithTask(day.getId())) {
-                deleteTaskFromDay(connectionDayWithTask);
-            }
-            notSafeDeleteDay(day.getId());
-        }
+        for(Day day : getAllDays()) deleteDay(day);
     }
-
-    @Transaction @Insert
-    public abstract void insertDayWithoutTasks(Day... day);
-
-    @Insert
-    public abstract void connectDayWithTask(ConnectionDayWithTask connectionDayWithTask);
-
-    @Update
-    public abstract void editDay(Day... day);
-
-    @Query("DELETE FROM Day WHERE id = :idDay")
-    public abstract void notSafeDeleteDay(int idDay);
-
-    @Delete
-    public abstract void deleteTaskFromDay(ConnectionDayWithTask... connectionDayWithTasks);
-
-    @Query("SELECT * FROM ConnectionDayWithTask WHERE idDay = :idDay")
-    public abstract List<ConnectionDayWithTask> getConnectionsDayWithTask(int idDay);
 }

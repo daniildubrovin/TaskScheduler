@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "d77fa52d60c806c4b8f422077613e2e6",
+    "identityHash": "ff86b04b76a161365783aa9819ce9a9a",
     "entities": [
       {
         "tableName": "Day",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `date` TEXT)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `date` TEXT, `tasks` TEXT)",
         "fields": [
           {
             "fieldPath": "id",
@@ -17,6 +17,12 @@
           {
             "fieldPath": "date",
             "columnName": "date",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "tasks",
+            "columnName": "tasks",
             "affinity": "TEXT",
             "notNull": false
           }
@@ -61,44 +67,12 @@
         },
         "indices": [],
         "foreignKeys": []
-      },
-      {
-        "tableName": "ConnectionDayWithTask",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `idDay` INTEGER NOT NULL, `idTask` INTEGER NOT NULL)",
-        "fields": [
-          {
-            "fieldPath": "id",
-            "columnName": "id",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "idDay",
-            "columnName": "idDay",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "idTask",
-            "columnName": "idTask",
-            "affinity": "INTEGER",
-            "notNull": true
-          }
-        ],
-        "primaryKey": {
-          "columnNames": [
-            "id"
-          ],
-          "autoGenerate": true
-        },
-        "indices": [],
-        "foreignKeys": []
       }
     ],
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'd77fa52d60c806c4b8f422077613e2e6')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'ff86b04b76a161365783aa9819ce9a9a')"
     ]
   }
 }
