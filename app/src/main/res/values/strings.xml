@@ -6,7 +6,7 @@
     <string name="tab_item_calendar">calendar</string>
 
     <!--item_generate -->
-    <string name="generate_button">generate tasks</string>
+    <string name="generate_button">generate new week</string>
     <string name="task_enter_text">add new task</string>
     <string name="edit_day_tasks_title">editing tasks</string>
     <string name="edit_day_tasks_negative_button">Cancel</string>

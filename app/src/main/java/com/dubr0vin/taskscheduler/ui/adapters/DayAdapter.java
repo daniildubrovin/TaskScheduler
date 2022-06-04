@@ -8,8 +8,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.dubr0vin.taskscheduler.R;
 import com.dubr0vin.taskscheduler.db.Task;
-import com.dubr0vin.taskscheduler.ui.TaskViewHolder;
-import com.google.gson.internal.LinkedTreeMap;
+import com.dubr0vin.taskscheduler.ui.holders.TaskViewHolder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,7 +29,7 @@ public class DayAdapter extends RecyclerView.Adapter<TaskViewHolder> {
 
     @Override
     public void onBindViewHolder(@NonNull TaskViewHolder holder, int position) {
-        Task task = tasks.get(position);
+        Task task = (Task)tasks.get(position);
         holder.getTextView().setText(String.valueOf(position));
         holder.getEditText().setEnabled(false);
         holder.getEditText().setText(task.getValue());

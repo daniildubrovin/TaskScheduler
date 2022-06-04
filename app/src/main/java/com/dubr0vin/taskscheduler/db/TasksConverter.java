@@ -11,11 +11,11 @@ import java.util.List;
 public class TasksConverter {
     @TypeConverter
     public String toTasks(List<Task> tasks){
-        return new Gson().toJson(tasks, new TypeToken<ArrayList>() {}.getType());
+        return new Gson().toJson(tasks, new TypeToken<List<Task>>(){}.getType());
     }
 
     @TypeConverter
     public List<Task> fromTasks(String tasks){
-        return tasks.isEmpty() ? new ArrayList<>() : new Gson().fromJson(tasks,List.class);
+        return tasks.isEmpty() ? new ArrayList<>() : new Gson().fromJson(tasks,new TypeToken<List<Task>>(){}.getType());
     }
 }

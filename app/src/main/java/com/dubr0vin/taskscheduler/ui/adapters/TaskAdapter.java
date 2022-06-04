@@ -5,45 +5,42 @@ import android.text.InputType;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.dubr0vin.taskscheduler.App;
 import com.dubr0vin.taskscheduler.R;
 import com.dubr0vin.taskscheduler.db.Task;
 import com.dubr0vin.taskscheduler.db.TasksDao;
-import com.dubr0vin.taskscheduler.ui.TaskViewHolder;
+import com.dubr0vin.taskscheduler.ui.TaskDiffUtilCallback;
+import com.dubr0vin.taskscheduler.ui.holders.TaskViewHolder;
 import com.dubr0vin.taskscheduler.ui.TaskTextWatcher;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class TaskAdapter extends RecyclerView.Adapter<TaskViewHolder> {
-    private final ArrayList<Task> tasks;
+    private final List<Task> tasks;
     private int focusPosition;
     private final RecyclerView recyclerView;
     private final App app;
     private final TasksDao tasksDao;
+    private final ProgressBar progressBar;
 
-    public TaskAdapter(RecyclerView recyclerView, App app) {
+    public TaskAdapter(RecyclerView recyclerView, ProgressBar progressBar, App app, List<Task> tasks) {
         this.recyclerView = recyclerView;
+        this.progressBar = progressBar;
         this.app = app;
         tasksDao = app.db.tasksDao();
-        tasks = new ArrayList<>();
-
-        app.runInDBThread(()->{
-            if(tasksDao.getAllTasks().isEmpty()) tasksDao.insertTask(new Task(false,""));
-            List<Task> tasksFromDB = tasksDao.getAllTasks();
-            app.runInUI(() -> {
-                tasks.addAll(tasksFromDB);
-                notifyItemRangeInserted(0,tasks.size());
-            });
-        });
+        this.tasks = tasks;
     }
 
     @NonNull
@@ -154,6 +151,37 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskViewHolder> {
             }
             return false;
         });
+    }
+
+    public void showTasks(){
+        setProgressBar(tasks.isEmpty());
+
+        app.runInDBThread(() -> {
+            TasksDao tasksDao = app.db.tasksDao();
+            List<Task> tasksFromDB = tasksDao.getAllTasks();
+
+            if(tasksDao.getAllTasks().isEmpty()) {
+                tasksDao.insertTask(new Task(false,""));
+                tasksFromDB.clear();
+                tasksFromDB.addAll(tasksDao.getAllTasks());
+            }
+
+            List<Task> oldTasks = new ArrayList<>(tasks);
+
+            DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(new TaskDiffUtilCallback(oldTasks,tasksFromDB));
+
+            app.runInUI(() -> {
+                tasks.clear();
+                tasks.addAll(tasksFromDB);
+                diffResult.dispatchUpdatesTo(this);
+                setProgressBar(false);
+            });
+        });
+    }
+
+    private void setProgressBar(boolean isWorking){
+        progressBar.setVisibility(isWorking ? View.VISIBLE : View.GONE);
+        recyclerView.setVisibility(isWorking ? View.GONE : View.VISIBLE);
     }
 
     @Override

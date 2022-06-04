@@ -64,4 +64,9 @@ public class Task {
         Task task = (Task) o;
         return id == task.id && inCalendar == task.inCalendar && Objects.equals(value, task.value);
     }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, inCalendar, value);
+    }
 }

@@ -19,7 +19,6 @@ public class ViewPagerAdapter extends FragmentStateAdapter {
     @NonNull
     @Override
     public Fragment createFragment(int position) {
-        Log.d(App.TAG,"create fragment");
         return position == 0 ? new TaskFragment() : new CalendarFragment();
     }
 

@@ -2,20 +2,19 @@ package com.dubr0vin.taskscheduler.ui;
 
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 
 import com.dubr0vin.taskscheduler.App;
 import com.dubr0vin.taskscheduler.db.Task;
-import com.dubr0vin.taskscheduler.db.TasksDao;
+import com.dubr0vin.taskscheduler.ui.holders.TaskViewHolder;
 
-import java.util.ArrayList;
+import java.util.List;
 
 public class TaskTextWatcher implements TextWatcher {
-    ArrayList<Task> tasks;
+    List<Task> tasks;
     TaskViewHolder holder;
     App app;
 
-    public TaskTextWatcher(ArrayList<Task> tasks, TaskViewHolder holder, App app) {
+    public TaskTextWatcher(List<Task> tasks, TaskViewHolder holder, App app) {
         this.tasks = tasks;
         this.holder = holder;
         this.app = app;

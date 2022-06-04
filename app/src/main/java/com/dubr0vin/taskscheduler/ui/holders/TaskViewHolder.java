@@ -1,4 +1,4 @@
-package com.dubr0vin.taskscheduler.ui;
+package com.dubr0vin.taskscheduler.ui.holders;
 
 import android.text.TextWatcher;
 import android.view.View;
