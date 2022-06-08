@@ -1,17 +1,17 @@
 package com.dubr0vin.taskscheduler.ui.holders;
 
 import android.view.View;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.dubr0vin.taskscheduler.R;
-import com.google.android.material.button.MaterialButton;
 
 public class DayViewHolder extends RecyclerView.ViewHolder{
     private final TextView textView;
-    private final MaterialButton editButton;
+    private final ImageButton editButton;
     private final RecyclerView recyclerView;
 
     public DayViewHolder(@NonNull View itemView) {
@@ -25,7 +25,7 @@ public class DayViewHolder extends RecyclerView.ViewHolder{
         return textView;
     }
 
-    public MaterialButton getEditButton() {
+    public ImageButton getEditButton() {
         return editButton;
     }
 

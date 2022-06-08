@@ -7,7 +7,6 @@ import androidx.room.Query;
 import androidx.room.Transaction;
 import androidx.room.Update;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Dao
@@ -20,16 +19,21 @@ public abstract class TasksDao {
     public abstract List<Task> getInCalendarTasks();
 
     @Query("SELECT * FROM Task WHERE id = :idTask")
-    public abstract Task getTask(int idTask);
+    public abstract Task getTask(long idTask);
 
     @Insert
-    public abstract long insertTask(Task task);
+    public abstract void insertTask(Task task);
 
     @Update
     public abstract  void editTask(Task task);
 
     @Delete
     public abstract void deleteTask(Task task);
+
+    @Transaction
+    public void deleteAllTasks(){
+        for (Task task: getAllTasks()) deleteTask(task);
+    }
 
     //DAY
     @Query("SELECT * FROM Day")
@@ -46,6 +50,20 @@ public abstract class TasksDao {
 
     @Update
     public abstract void editDay(Day day);
+
+    @Transaction
+    public void updateDayTasks(Day day){
+        for (int i = 0; i < day.getTasks().size(); i++) {
+            Task oldTask = day.getTasks().get(i);
+            Task newTask = getTask(oldTask.getId());
+            if(newTask == null || !newTask.isInCalendar()){
+                day.getTasks().remove(i);
+                i--;
+            }
+            else oldTask.setValue(newTask.getValue());
+        }
+        editDay(day);
+    }
 
     @Delete
     public abstract void deleteDay(Day day);

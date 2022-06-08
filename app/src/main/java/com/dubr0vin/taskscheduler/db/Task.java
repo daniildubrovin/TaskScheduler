@@ -1,7 +1,6 @@
 package com.dubr0vin.taskscheduler.db;
 
 import androidx.annotation.NonNull;
-import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.Ignore;
 import androidx.room.PrimaryKey;

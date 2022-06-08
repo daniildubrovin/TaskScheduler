@@ -10,9 +10,9 @@ import com.dubr0vin.taskscheduler.ui.holders.TaskViewHolder;
 import java.util.List;
 
 public class TaskTextWatcher implements TextWatcher {
-    List<Task> tasks;
-    TaskViewHolder holder;
-    App app;
+    final List<Task> tasks;
+    final TaskViewHolder holder;
+    final App app;
 
     public TaskTextWatcher(List<Task> tasks, TaskViewHolder holder, App app) {
         this.tasks = tasks;
@@ -24,7 +24,7 @@ public class TaskTextWatcher implements TextWatcher {
     public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
         Task task = tasks.get(holder.getAdapterPosition());
         task.setValue(charSequence.toString());
-        app.dbThreadPool.execute(() -> app.db.tasksDao().editTask(task));
+        app.runInDBThread(() -> app.db.tasksDao().editTask(task));
     }
 
     @Override

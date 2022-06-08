@@ -12,11 +12,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class App extends Application {
-    static public String TAG = "TaskScheduler";
+    static public final String TAG = "TaskScheduler";
     public TasksDatabase db;
     public ExecutorService dbThreadPool;
     public Handler uiThread;
-    public int COUNT_GENERATE_DAY = 7;
+    public final int COUNT_GENERATE_DAY = 7;
 
     @Override
     public void onCreate() {

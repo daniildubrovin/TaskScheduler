@@ -1,16 +1,14 @@
 package com.dubr0vin.taskscheduler.ui.adapters;
 
-import android.content.Context;
 import android.text.InputType;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.DiffUtil;
@@ -18,16 +16,17 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.dubr0vin.taskscheduler.App;
 import com.dubr0vin.taskscheduler.R;
+import com.dubr0vin.taskscheduler.Utilities;
 import com.dubr0vin.taskscheduler.db.Task;
 import com.dubr0vin.taskscheduler.db.TasksDao;
 import com.dubr0vin.taskscheduler.ui.TaskDiffUtilCallback;
-import com.dubr0vin.taskscheduler.ui.holders.TaskViewHolder;
 import com.dubr0vin.taskscheduler.ui.TaskTextWatcher;
+import com.dubr0vin.taskscheduler.ui.holders.TaskViewHolder;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class TaskAdapter extends RecyclerView.Adapter<TaskViewHolder> {
+public class TasksAdapter extends RecyclerView.Adapter<TaskViewHolder> {
     private final List<Task> tasks;
     private int focusPosition;
     private final RecyclerView recyclerView;
@@ -35,12 +34,13 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskViewHolder> {
     private final TasksDao tasksDao;
     private final ProgressBar progressBar;
 
-    public TaskAdapter(RecyclerView recyclerView, ProgressBar progressBar, App app, List<Task> tasks) {
+    public TasksAdapter(RecyclerView recyclerView, ProgressBar progressBar, App app) {
         this.recyclerView = recyclerView;
         this.progressBar = progressBar;
         this.app = app;
+        this.tasks = new ArrayList<>();
+
         tasksDao = app.db.tasksDao();
-        this.tasks = tasks;
     }
 
     @NonNull
@@ -51,32 +51,30 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskViewHolder> {
 
     @Override
     public void onBindViewHolder(@NonNull TaskViewHolder holder, int position) {
-        Log.d(App.TAG,"onBindViewHolder: " + position + "| fp: " + focusPosition);
-
         if(position == focusPosition){
             holder.getEditText().requestFocus();
-            InputMethodManager imm = (InputMethodManager) app.getSystemService(Context.INPUT_METHOD_SERVICE);
-            imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, InputMethodManager.HIDE_IMPLICIT_ONLY);
+            holder.getEditText().postDelayed(() -> Utilities.showKeyBoard(holder.getEditText()), 100);
         }
-        else holder.getEditText().clearFocus();
 
         holder.getCheckBox().setChecked(tasks.get(position).isInCalendar());
 
-        holder.getCheckBox().setOnCheckedChangeListener((compoundButton, b) -> {
-            app.runInDBThread(() -> {
-                Task task = tasks.get(holder.getAdapterPosition());
-                task.setInCalendar(b);
-                tasksDao.editTask(task);
-                app.runInUI(() -> notifyItemChanged(holder.getAdapterPosition()));
-            });
-        });
+        holder.getCheckBox().setOnCheckedChangeListener((compoundButton, b) -> app.runInDBThread(() -> {
+            Task task = tasks.get(holder.getAdapterPosition());
+            task.setInCalendar(b);
+            tasksDao.editTask(task);
+            app.runInUI(() -> notifyItemChanged(holder.getAdapterPosition()));
+        }));
+
+        holder.getTextView().setText(String.valueOf(position + 1));
 
         //before setText(), you need to remove TextWatcher, otherwise TextWatcher will loop
         holder.getEditText().removeTextChangedListener(holder.getTextWatcher());
 
         holder.getEditText().setText("");
         holder.getEditText().append(tasks.get(position).getValue());
-        holder.getTextView().setText(String.valueOf(position + 1));
+        holder.getEditText().setOnFocusChangeListener((v, hasFocus) -> {
+            if(hasFocus) focusPosition = holder.getAdapterPosition();
+        });
 
         holder.setTextWatcher(new TaskTextWatcher(tasks,holder,app));
         holder.getEditText().addTextChangedListener(holder.getTextWatcher());
@@ -85,53 +83,41 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskViewHolder> {
         setKeyDeleteListener(holder);
     }
 
-    private void addNewTask(TaskViewHolder holder){
-        app.runInDBThread(() -> {
-            Task newTask = new Task(false,"");
-            newTask.setId(tasksDao.insertTask(newTask));
-
-            List<Task> tasksFromDb = tasksDao.getAllTasks();
-
-            app.runInUI(() -> {
-                tasks.clear();
-                tasks.addAll(tasksFromDb);
-                focusPosition = holder.getAdapterPosition() + 1;
-                notifyItemInserted(tasks.size() - 1);
-            });
-        });
-    }
-
     private void setKeyEnterListener(TaskViewHolder holder){
         EditText editText = holder.getEditText();
-        editText.setImeOptions(EditorInfo.IME_ACTION_GO);
+        editText.setImeOptions(EditorInfo.IME_ACTION_NEXT);
         editText.setRawInputType(InputType.TYPE_CLASS_TEXT);
 
-        editText.setOnEditorActionListener((textView, i, keyEvent) -> {
-            if(i == EditorInfo.IME_ACTION_GO) {
-                if(!editText.getText().toString().isEmpty() && holder.getAdapterPosition() == tasks.size() - 1) addNewTask(holder);
-                else if(editText.getSelectionStart() == holder.getEditText().getText().length()){
-                    focusPosition = holder.getAdapterPosition() + 1;
+        editText.setOnEditorActionListener((view, i, keyEvent) -> {
+            if(i == EditorInfo.IME_ACTION_NEXT) {
+                focusPosition = holder.getAdapterPosition() + 1;
+
+                if(holder.getAdapterPosition() == tasks.size() - 1) addNewTask(holder);
+                else {
                     notifyItemChanged(focusPosition);
+                    recyclerView.scrollToPosition(focusPosition+1);
                 }
-                recyclerView.scrollToPosition(focusPosition);
+                return true;
             }
             return false;
         });
     }
 
-    private void deleteTask(int position){
-        Task delTask = tasks.get(position);
-
-        app.runInDBThread(() -> {
-            tasksDao.deleteTask(delTask);
-
+    private void addNewTask(TaskViewHolder holder){
+        if(holder.getEditText().getText().length() == 0) {
+            Utilities.hideKeyBoard(holder.getEditText());
+            Toast.makeText(holder.itemView.getContext(), R.string.empty_new_task,Toast.LENGTH_SHORT).show();
+        }
+        else app.runInDBThread(() -> {
+            tasksDao.insertTask(new Task(false,""));
             List<Task> tasksFromDb = tasksDao.getAllTasks();
 
             app.runInUI(() -> {
                 tasks.clear();
                 tasks.addAll(tasksFromDb);
-                notifyItemRemoved(position);
+                notifyItemInserted(tasks.size()-1);
                 notifyItemChanged(focusPosition);
+                recyclerView.scrollToPosition(focusPosition);
             });
         });
     }
@@ -140,20 +126,34 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskViewHolder> {
         holder.getEditText().setOnKeyListener((view, i, keyEvent) -> {
             if(keyEvent.getAction() == KeyEvent.ACTION_DOWN && keyEvent.getKeyCode() == KeyEvent.KEYCODE_DEL){
                 int position = holder.getAdapterPosition();
-                if(tasks.size() > 1 && holder.getEditText().getText().toString().isEmpty()){
-                    focusPosition = position > 0 ? position - 1 : 0;
-                    deleteTask(position);
-                }
-                else if(holder.getAdapterPosition() != 0 && holder.getEditText().getSelectionStart() == 0){
-                    focusPosition = position > 0 ? position - 1 : 0;
+                focusPosition = position > 0 ? position - 1 : 0;
+
+                if(tasks.size() > 1 && holder.getEditText().getText().length() == 0) deleteTask(holder);
+                else if(holder.getAdapterPosition() != 0 && holder.getEditText().getSelectionStart() == 0) {
                     notifyItemChanged(focusPosition);
+                    recyclerView.scrollToPosition(focusPosition);
                 }
             }
             return false;
         });
     }
 
-    public void showTasks(){
+    private void deleteTask(TaskViewHolder holder){
+        app.runInDBThread(() -> {
+            tasksDao.deleteTask(tasks.get(holder.getAdapterPosition()));
+            List<Task> tasksFromDb = tasksDao.getAllTasks();
+
+            app.runInUI(() -> {
+                tasks.clear();
+                tasks.addAll(tasksFromDb);
+                recyclerView.scrollToPosition(focusPosition);
+                notifyItemRemoved(holder.getAdapterPosition());
+                notifyItemRangeChanged(focusPosition,tasks.size());
+            });
+        });
+    }
+
+    public void updateTasks(){
         setProgressBar(tasks.isEmpty());
 
         app.runInDBThread(() -> {
@@ -166,9 +166,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskViewHolder> {
                 tasksFromDB.addAll(tasksDao.getAllTasks());
             }
 
-            List<Task> oldTasks = new ArrayList<>(tasks);
-
-            DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(new TaskDiffUtilCallback(oldTasks,tasksFromDB));
+            DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(new TaskDiffUtilCallback(tasks,tasksFromDB));
 
             app.runInUI(() -> {
                 tasks.clear();

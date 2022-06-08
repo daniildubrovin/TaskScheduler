@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">TaskScheduler</string>
+    <string name="menu_item_settings">настройки</string>
+    <string name="tab_item_tasks">задания</string>
+    <string name="tab_item_calendar">календарь</string>
+    <string name="generate_button">сгенерировать новую неделю</string>
+    <string name="task_enter_text">добавить новое задание</string>
+    <string name="edit_day_tasks_title">РЕДАКТИРОВАНИЕ ЗАДАНИЙ</string>
+    <string name="edit_day_tasks_negative_button">Отмена</string>
+    <string name="edit_day_tasks_positive_button">ОК</string>
+    <string name="empty_new_task">Задание не может быть пустым</string>
+    <string name="default_task_name">задание</string>
+    <string name="statistics_text">"задания выполнены на "</string>
+</resources>

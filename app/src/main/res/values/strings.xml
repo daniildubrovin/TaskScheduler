@@ -1,6 +1,6 @@
 <resources>
     <!-- activity_main -->
-    <string name="app_name">TaskScheduler</string>
+    <string name="app_name" translatable="false">TaskScheduler</string>
     <string name="menu_item_settings">settings</string>
     <string name="tab_item_tasks">tasks</string>
     <string name="tab_item_calendar">calendar</string>
@@ -8,7 +8,11 @@
     <!--item_generate -->
     <string name="generate_button">generate new week</string>
     <string name="task_enter_text">add new task</string>
-    <string name="edit_day_tasks_title">editing tasks</string>
+    <string name="edit_day_tasks_title">EDITING TASKS</string>
     <string name="edit_day_tasks_negative_button">Cancel</string>
     <string name="edit_day_tasks_positive_button">OK</string>
+
+    <string name="empty_new_task">The task cannot be empty</string>
+    <string name="default_task_name">task</string>
+    <string name="statistics_text">tasks completed by </string>
 </resources>
